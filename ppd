@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+VERSION="0.1.0"
+
+_print_version()
+{
+  echo "ppd version $VERSION"
+}
+
+_print_options()
+{
+  echo "Commands: "
+  echo "  list                         : List dir stack"
+  echo "  push                         : Push dir to stack"
+  echo "  pop                          : Pop dir from stack"
+  echo "  go                           : Navigate to dir"
+  echo "  add                          : Add dir to stack"
+  echo "  delete                       : Delete dir from stack"
+  echo "  clear                        : Empty the stack"
+  echo "  -h, --help                   : Display this message"
+  echo "  -v, --version                : Display the version of ppd"
+}
+
+PPDSTACK=("$(pwd)")
+
+_uniques() {
+  # get unique entries from the stack
+  printf "%s\n" "${PPDSTACK[@]}" | awk '!seen[$0]++'
+}
+
+_add() {
+  # add one or more directories to the stack
+  if [ "$#" -eq 0 ]; then
+    PPDSTACK+=("$(pwd)")
+  else
+    local argdir
+    for argdir in "$@"; do
+      if [ ! -d "$argdir" ]; then
+        echo "invalid directory: $argdir"
+      else
+        PPDSTACK+=("$argdir")
+      fi
+    done
+  fi
+}
+
+_clear() {
+  # clear the stack
+  PPDSTACK=()
+}
+
+_go() {
+  # navigate to a directory in the stack
+  if [ "${#PPDSTACK[@]}" -eq 0 ]; then
+    echo "directory stack empty"
+    return
+  fi
+
+  if [ "$#" -eq 1 ]; then
+    local index="$(($1-1))"
+    if [[ -z "${PPDSTACK[$index]:-}" || "$index" -eq -1 ]]; then
+      echo "no entry $1 in stack"
+      return
+    else
+      cd "${PPDSTACK[$index]}" || echo "entry $1 not found"
+      return
+    fi
+  fi
+
+  local nums
+  read -r -d ' ' -a nums < <(seq "${#PPDSTACK[@]}"; printf ' ')
+  local COLUMNS=1
+  local PS3="select: "
+  local result
+  select result in "${PPDSTACK[@]}"; do
+    local index="$(($REPLY-1))"
+    if [[ -z "${PPDSTACK[$index]:-}" || "$index" -eq -1 ]]; then
+      echo "no entry $REPLY in stack"
+      break
+    else
+      cd "$result" || return
+      break
+    fi
+  done
+}
+
+_list(){
+  # print all entries in the stack
+  if [ "${#PPDSTACK[@]}" -eq 0 ]; then
+    echo "directory stack empty"
+  else
+    local nums
+    read -r -d ' ' -a nums < <(seq "${#PPDSTACK[@]}"; printf ' ')
+    paste <(printf "%s)\n" "${nums[@]}") <(printf "%s\n" "${PPDSTACK[@]}") | sed 's/\t/ /'
+  fi
+}
+
+_pop() {
+  # pop last directory from the stack
+  if [ "${#PPDSTACK[@]}" -eq 0 ]; then
+    echo "directory stack empty"
+  elif [ "${#PPDSTACK[@]}" -eq 1 ]; then
+    cd "${PPDSTACK[0]}" || return
+    unset 'PPDSTACK[${#PPDSTACK[@]}-1]'
+  else
+    unset 'PPDSTACK[${#PPDSTACK[@]}-1]'
+    cd "${PPDSTACK[-1]}" || return
+  fi
+}
+
+_push(){
+  # push one or more directories to the stack
+  l="${#PPDSTACK[@]}"
+  if [ "$#" -eq 0 ]; then
+    PPDSTACK+=("$(pwd)")
+  else
+    local argdir
+    for argdir in "$@"; do
+      if [ ! -d "$argdir" ]; then
+        echo "invalid directory: $argdir"
+      else
+        PPDSTACK+=("$argdir")
+      fi
+    done
+    if [ "${#PPDSTACK[@]}" -gt "$l" ]; then
+      cd "${PPDSTACK[${#PPDSTACK[@]}-1]}" || return
+    fi
+  fi
+}
+
+_remove(){
+  # remove one or more directories from the stack
+  if [ "${#PPDSTACK[@]}" -eq 0 ]; then
+    echo "directory stack empty"
+  elif [ "$#" -eq 0 ]; then
+    local COLUMNS=1
+    local PS3="select: "
+    local result
+    select result in "${PPDSTACK[@]}"; do
+      local index="$(($REPLY-1))"
+      if [[ -z "${PPDSTACK[$index]:-}" || "$index" -eq -1 ]]; then
+        echo "no entry $REPLY in stack"
+      else
+        unset 'PPDSTACK[$index]'
+        PPDSTACK=("${PPDSTACK[@]}")
+      fi
+      break
+    done
+  else
+    local index="$(($1-1))"
+    if [[ -z "${PPDSTACK[$index]:-}" || "$index" -eq -1 ]]; then
+      echo "no entry $1 in stack"
+    else
+      unset 'PPDSTACK[$index]'
+      PPDSTACK=("${PPDSTACK[@]}")
+    fi
+  fi
+}
+
+_usage() {
+  echo "Error: Must specify at least one command"
+  echo "Usage: ppd [COMMAND]"
+  echo "       ppd [-h | -v ]"
+  _print_options
+}
+
+ppd(){
+  # parse command line arguments
+  if [[ "$#" -eq 0 ]]; then
+    _usage
+  else
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            -h|--help) _print_options; break ;;
+            -v|--version) _print_version; break;;
+            add)
+              shift
+              _add "$@";
+              break ;;
+            clear)
+              if [ "$#" -gt 1 ]; then echo "ppd clear takes no arguments" && break; fi
+              _clear;
+              break ;;
+            go)
+              shift
+              if [ "$#" -gt 1 ]; then echo "ppd go takes zero or one arguments" && break; fi
+              if [ "$#" -eq 1 ] && ! grep -qE '[0-9]+' <<<"$1"; then echo "argument must be a number" && break; fi
+              _go "$@";
+              break ;;
+            list)
+              if [ "$#" -gt 1 ]; then echo "ppd list takes no arguments" && break; fi
+              _list;
+              break ;;
+            pop)
+              if [ "$#" -gt 1 ]; then echo "ppd pop takes no arguments" && break; fi
+              _pop;
+              break ;;
+            push)
+              shift
+              _push "$@";
+              break ;;
+            remove)
+              shift
+              if [ "$#" -gt 1 ]; then echo "ppd remove takes zero or one arguments" && break; fi
+              if [ "$#" -eq 1 ] && ! grep -qE '[0-9]+' <<<"$1"; then echo "argument must be a number" && break; fi
+              _remove "$@";
+              break;;
+            *) echo "Unknown parameter passed: $1";;
+        esac
+        shift
+    done
+  fi
+}
