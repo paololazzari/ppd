@@ -14,6 +14,7 @@ wd="$(pwd)"
 @test "ppd go args" {
   ppd go 4 | grep -E "no entry 4 in stack"
   ppd go 0 | grep -E "no entry 0 in stack"
+  ppd go -1 | grep -E "argument must be a positive number"
 }
 
 @test "ppd go local vars" {

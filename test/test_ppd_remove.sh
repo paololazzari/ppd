@@ -17,6 +17,7 @@ wd="$(pwd)"
   ppd remove 1 2 | grep -E "ppd remove takes zero or one arguments"
   ppd remove 0 | grep -E "no entry 0 in stack"
   ppd remove 4 | grep -E "no entry 4 in stack"
+  ppd remove -1 | grep -E "argument must be a positive number"
 }
 
 @test "ppd remove local vars" {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION="0.1.0"
+VERSION="0.1.1"
 
 _print_version()
 {
@@ -183,7 +183,7 @@ ppd(){
             go)
               shift
               if [ "$#" -gt 1 ]; then echo "ppd go takes zero or one arguments" && break; fi
-              if [ "$#" -eq 1 ] && ! grep -qE '[0-9]+' <<<"$1"; then echo "argument must be a number" && break; fi
+              if [ "$#" -eq 1 ] && ! grep -qE '^[0-9]+$' <<<"$1"; then echo "argument must be a positive number" && break; fi
               _go "$@";
               break ;;
             list)
@@ -201,7 +201,7 @@ ppd(){
             remove)
               shift
               if [ "$#" -gt 1 ]; then echo "ppd remove takes zero or one arguments" && break; fi
-              if [ "$#" -eq 1 ] && ! grep -qE '[0-9]+' <<<"$1"; then echo "argument must be a number" && break; fi
+              if [ "$#" -eq 1 ] && ! grep -qE '^[0-9]+$' <<<"$1"; then echo "argument must be a positive number" && break; fi
               _remove "$@";
               break;;
             *) echo "Unknown parameter passed: $1";;
