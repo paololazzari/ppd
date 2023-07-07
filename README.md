@@ -4,12 +4,6 @@ ppd is a pushd/popd alternative written in bash
 
 ## Usage
 
-Setup:
-
-```bash
-root:@/home $ . /usr/local/bin/ppd
-```
-
 Usage:
 
 ```bash
@@ -58,9 +52,14 @@ directory stack empty
 ## Installation
 
 ```bash
-$ curl -O https://raw.githubusercontent.com/paololazzari/ppd/master/ppd
-$ cp ppd /usr/local/bin/ppd
-$ . /usr/local/bin/ppd
+$ git clone https://github.com/paololazzari/ppd; cd ppd
+$ sudo make install
 ```
 
-consider adding the last command to your $HOME/.bashrc
+## Unistallation
+
+In the directory where you cloned the repository
+
+```bash
+$ sudo make uninstall
+```
