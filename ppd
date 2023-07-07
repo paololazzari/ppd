@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 VERSION="0.1.1"
 
-_print_version()
+print_version()
 {
   echo "ppd version $VERSION"
 }
 
-_print_options()
+print_options()
 {
   echo "Commands: "
   echo "  list                         : List dir stack"
@@ -22,12 +22,12 @@ _print_options()
 
 PPDSTACK=("$(pwd)")
 
-_uniques() {
+uniques() {
   # get unique entries from the stack
   printf "%s\n" "${PPDSTACK[@]}" | awk '!seen[$0]++'
 }
 
-_add() {
+add() {
   # add one or more directories to the stack
   if [ "$#" -eq 0 ]; then
     PPDSTACK+=("$(pwd)")
@@ -43,12 +43,12 @@ _add() {
   fi
 }
 
-_clear() {
+clear() {
   # clear the stack
   PPDSTACK=()
 }
 
-_go() {
+go() {
   # navigate to a directory in the stack
   if [ "${#PPDSTACK[@]}" -eq 0 ]; then
     echo "directory stack empty"
@@ -83,7 +83,7 @@ _go() {
   done
 }
 
-_list(){
+list(){
   # print all entries in the stack
   if [ "${#PPDSTACK[@]}" -eq 0 ]; then
     echo "directory stack empty"
@@ -94,7 +94,7 @@ _list(){
   fi
 }
 
-_pop() {
+pop() {
   # pop last directory from the stack
   if [ "${#PPDSTACK[@]}" -eq 0 ]; then
     echo "directory stack empty"
@@ -107,7 +107,7 @@ _pop() {
   fi
 }
 
-_push(){
+push(){
   # push one or more directories to the stack
   l="${#PPDSTACK[@]}"
   if [ "$#" -eq 0 ]; then
@@ -127,7 +127,7 @@ _push(){
   fi
 }
 
-_remove(){
+remove(){
   # remove one or more directories from the stack
   if [ "${#PPDSTACK[@]}" -eq 0 ]; then
     echo "directory stack empty"
@@ -156,53 +156,53 @@ _remove(){
   fi
 }
 
-_usage() {
+usage() {
   echo "Error: Must specify at least one command"
   echo "Usage: ppd [COMMAND]"
   echo "       ppd [-h | -v ]"
-  _print_options
+  print_options
 }
 
 ppd(){
   # parse command line arguments
   if [[ "$#" -eq 0 ]]; then
-    _usage
+    usage
   else
     while [[ "$#" -gt 0 ]]; do
         case $1 in
-            -h|--help) _print_options; break ;;
-            -v|--version) _print_version; break;;
+            -h|--help) print_options; break ;;
+            -v|--version) print_version; break;;
             add)
               shift
-              _add "$@";
+              add "$@";
               break ;;
             clear)
               if [ "$#" -gt 1 ]; then echo "ppd clear takes no arguments" && break; fi
-              _clear;
+              clear;
               break ;;
             go)
               shift
               if [ "$#" -gt 1 ]; then echo "ppd go takes zero or one arguments" && break; fi
               if [ "$#" -eq 1 ] && ! grep -qE '^[0-9]+$' <<<"$1"; then echo "argument must be a positive number" && break; fi
-              _go "$@";
+              go "$@";
               break ;;
             list)
               if [ "$#" -gt 1 ]; then echo "ppd list takes no arguments" && break; fi
-              _list;
+              list;
               break ;;
             pop)
               if [ "$#" -gt 1 ]; then echo "ppd pop takes no arguments" && break; fi
-              _pop;
+              pop;
               break ;;
             push)
               shift
-              _push "$@";
+              push "$@";
               break ;;
             remove)
               shift
               if [ "$#" -gt 1 ]; then echo "ppd remove takes zero or one arguments" && break; fi
               if [ "$#" -eq 1 ] && ! grep -qE '^[0-9]+$' <<<"$1"; then echo "argument must be a positive number" && break; fi
-              _remove "$@";
+              remove "$@";
               break;;
             *) echo "Unknown parameter passed: $1";;
         esac
