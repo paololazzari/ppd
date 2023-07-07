@@ -210,3 +210,5 @@ ppd(){
     done
   fi
 }
+
+ppd "$@"
